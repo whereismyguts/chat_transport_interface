@@ -1,12 +1,22 @@
 from abc import ABC, abstractmethod
+import os
+from dotenv import load_dotenv
+
 import discord
 import asyncio
-from aiogram import Bot, Dispatcher, Router, types
-from aiogram.enums import ParseMode
+from aiogram import Bot, Dispatcher, types
 
+load_dotenv()
+
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+
+DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 
 # TODO move to separate files
 # TODO add logging
+
 
 class ChatTransport(ABC):
     def __init__(self, chat_id):
@@ -100,21 +110,20 @@ class BusinessLogicController:
 
 
 if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-    load_dotenv()
 
-    telegram_bot_token = os.getenv('telegram_bot_token')
-    telegram_chat_id = os.getenv('telegram_chat_id')
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--telegram', action='store_true')
+    parser.add_argument('--discord', action='store_true')
+    args = parser.parse_args()
 
-    discord_bot_token = os.getenv('discord_bot_token')
-    discord_channel_id = os.getenv('discord_channel_id')
+    if args.telegram:
+        transport = ChatTransportTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
 
-    # discord
-    # transport = ChatTransportDiscord(discord_bot_token, discord_channel_id)
-
-    # telegram
-    transport = ChatTransportTelegram(telegram_bot_token, telegram_chat_id)
+    elif args.discord:
+        transport = ChatTransportDiscord(DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID)
+    else:
+        raise ValueError("Please specify --telegram or --discord")
 
     bot = BusinessLogicController(transport)
     asyncio.run(bot.run())
